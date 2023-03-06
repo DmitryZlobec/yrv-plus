@@ -350,6 +350,9 @@ always_ff @ (posedge time_clk or posedge reset)
       mem_addr_reg <= 16'h0;
       mem_ble_reg  <=  4'h0;
       vga_wr_reg_0   <=  1'b0;
+      vga_wr_reg_1   <=  1'b0;
+
+
       end
     else if (mem_ready) begin
       mem_addr_reg <= mem_addr[15:0];
@@ -361,70 +364,57 @@ always_ff @ (posedge time_clk or posedge reset)
 
   reg   [31:0]  color_line_reg_0;
   reg   [31:0]  color_line_reg_1;
-
-  always @ (posedge clk) begin
-          if (vga_wr_byte_0[3]) vga_mem3_0[mem_addr_reg[15:2]] <= mem_wdata[31:24];
-          if (vga_wr_byte_0[2]) vga_mem2_0[mem_addr_reg[15:2]] <= mem_wdata[23:16];
-          if (vga_wr_byte_0[1]) vga_mem1_0[mem_addr_reg[15:2]] <= mem_wdata[15:8];
-          if (vga_wr_byte_0[0]) vga_mem0_0[mem_addr_reg[15:2]] <= mem_wdata[7:0];
-          
-          if (vga_wr_byte_1[3]) vga_mem3_1[mem_addr_reg[15:2]] <= mem_wdata[31:24];
-          if (vga_wr_byte_1[2]) vga_mem2_1[mem_addr_reg[15:2]] <= mem_wdata[23:16];
-          if (vga_wr_byte_1[1]) vga_mem1_1[mem_addr_reg[15:2]] <= mem_wdata[15:8];
-          if (vga_wr_byte_1[0]) vga_mem0_1[mem_addr_reg[15:2]] <= mem_wdata[7:0];
-
-
-
-        if((! (vga_wr_reg_0 || vga_wr_reg_1)) && display_on) 
-        begin
-          color_reg <= sram_io;    
-        end  
-        // case(pixel_addr[1:0])
-        //   2'b00: color_reg <= pixel_addr[16] ? vga_mem0_1 [pixel_addr[15:2]]: vga_mem0_0 [pixel_addr[15:2]];
-        //   2'b01: color_reg <= pixel_addr[16] ? vga_mem1_1 [pixel_addr[15:2]]: vga_mem1_0 [pixel_addr[15:2]];
-        //   2'b10: color_reg <= pixel_addr[16] ? vga_mem2_1 [pixel_addr[15:2]]: vga_mem2_0 [pixel_addr[15:2]];
-        //   2'b11: color_reg <= pixel_addr[16] ? vga_mem3_1 [pixel_addr[15:2]]: vga_mem3_0 [pixel_addr[15:2]];
-        // endcase    
-    end
-
-  // assing sram_io = (vga_wr_reg_0 || vga_wr_reg_1)? mem_wdata[7:0]: 'z; 
-
-  always_comb
-  begin
-    if (vga_wr_byte_0[3]) sram_io <= mem_wdata[31:24];
-    else if (vga_wr_byte_0[2]) sram_io <= mem_wdata[23:16];
-    else if (vga_wr_byte_0[1]) sram_io <= mem_wdata[15:8];
-    else if (vga_wr_byte_0[0]) sram_io <= mem_wdata[7:0];
-    else if (vga_wr_byte_1[3]) sram_io <= mem_wdata[31:24];
-    else if (vga_wr_byte_1[2]) sram_io <= mem_wdata[23:16];
-    else if (vga_wr_byte_1[1]) sram_io <= mem_wdata[15:8];
-    else if (vga_wr_byte_1[0]) sram_io <= mem_wdata[7:0];
-    else sram_io = 'z;    
-  end
-
+  wire   we_en;
   assign sram_cs2 = 1'b1;
   assign sram_n_cs1 = 1'b0;
   assign sram_n_oe = 1'b0;
-  assign sram_n_we = ~ (vga_wr_reg_0 || vga_wr_reg_1);
+  assign sram_n_we = ~ we_en;
 
+  // assign sram_n_we = ~ ((vga_wr_reg_0 || vga_wr_reg_1) || we_en) ;
 
-  always_comb
-  begin
-    if (vga_wr_byte_0[3]) sram_a <= {1'b0,mem_addr_reg[15:2],1'b1,1'b1};
-    else if (vga_wr_byte_0[2]) sram_a <= {1'b0,mem_wdata[23:16],1'b1,1'b0};
-    else if (vga_wr_byte_0[1]) sram_a <= {1'b0,mem_wdata[15:8],1'b0,1'b1};
-    else if (vga_wr_byte_0[0]) sram_a <= {1'b0,mem_wdata[7:0],1'b0,1'b0};
-    else if (vga_wr_byte_1[3]) sram_a <= {1'b1,mem_wdata[31:24],1'b1,1'b1};
-    else if (vga_wr_byte_1[2]) sram_a <= {1'b1,mem_wdata[23:16],1'b1,1'b0};
-    else if (vga_wr_byte_1[1]) sram_a <= {1'b1,mem_wdata[15:8],1'b0,1'b1};
-    else if (vga_wr_byte_1[0]) sram_a <= {1'b1,mem_wdata[7:0],1'b0,1'b0};
-    else sram_a = pixel_addr;    
+  wire [7:0] Rx_Data;
+  wire  [7:0] Tx_Data;
+
+  
+  assign we_en = (vga_wr_reg_0 || vga_wr_reg_1) && mem_ready;
+
+  assign sram_a  = we_en ? wr_addr : pixel_addr;
+  
+  assign sram_io = we_en ? Tx_Data: 16'bZ;
+  
+  
+  always @ (posedge clk) begin
+    if(! (vga_wr_reg_0 || vga_wr_reg_1))
+        color_reg <= sram_io;    
+  end
+
+  always_comb begin
+         if (vga_wr_byte_1[3]) Tx_Data <= mem_wdata[31:24];
+    else if (vga_wr_byte_1[2]) Tx_Data <= mem_wdata[23:16];
+    else if (vga_wr_byte_1[1]) Tx_Data <= mem_wdata[15:8];
+    else if (vga_wr_byte_1[0]) Tx_Data <= mem_wdata[7:0];  
+    else if (vga_wr_byte_0[3]) Tx_Data <= mem_wdata[31:24];
+    else if (vga_wr_byte_0[2]) Tx_Data <= mem_wdata[23:16];
+    else if (vga_wr_byte_0[1]) Tx_Data <= mem_wdata[15:8];
+    else                       Tx_Data <= mem_wdata[7:0];  // (vga_wr_byte_0[0]) 
+  end
+
+  always_comb begin
+         if (vga_wr_byte_0[3]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b1,1'b1};
+    else if (vga_wr_byte_0[2]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b1,1'b0};
+    else if (vga_wr_byte_0[1]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b0,1'b1};
+    else if (vga_wr_byte_0[0]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b0,1'b0};
+    else if (vga_wr_byte_1[3]) wr_addr = {1'b1,mem_addr_reg[15:2],1'b1,1'b1};
+    else if (vga_wr_byte_1[2]) wr_addr = {1'b1,mem_addr_reg[15:2],1'b1,1'b0};
+    else if (vga_wr_byte_1[1]) wr_addr = {1'b1,mem_addr_reg[15:2],1'b0,1'b1};
+    else                       wr_addr = {1'b1,mem_addr_reg[15:2],1'b0,1'b0}; //(vga_wr_byte_1[0])
   end
 
 
   // assign sram_a = (vga_wr_reg_0 || vga_wr_reg_1) ? {( ~vga_wr_reg_0 || vga_wr_reg_1), mem_addr_reg} : pixel_addr;
 
   logic [16:0] pixel_addr;
+  wire [16:0] wr_addr;
   reg   [7:0]  color_reg;// = 8'b00000011;
 
 
