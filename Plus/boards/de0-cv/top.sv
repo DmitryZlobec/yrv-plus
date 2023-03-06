@@ -136,7 +136,9 @@ always_ff @ (posedge time_clk or posedge reset)
  //          timer_flag <=0;
 
   wire muxed_clk_raw
-    = slow_clk_mode ? clk_cnt [20] : clk;
+    = slow_clk_mode ? clk_cnt [1] : clk;
+
+    // = slow_clk_mode ? clk_cnt [20] : clk;
 
   wire muxed_clk;
 
@@ -345,7 +347,7 @@ always_ff @ (posedge time_clk or posedge reset)
     );
 
 
-  always @ (posedge clk or negedge resetb) begin
+  always @ (posedge muxed_clk or negedge resetb) begin
     if (!resetb) begin
       mem_addr_reg <= 16'h0;
       mem_ble_reg  <=  4'h0;
@@ -383,7 +385,7 @@ always_ff @ (posedge time_clk or posedge reset)
   assign sram_io = we_en ? Tx_Data: 16'bZ;
   
   
-  always @ (posedge clk) begin
+  always @ (posedge muxed_clk) begin
     if(! (vga_wr_reg_0 || vga_wr_reg_1))
         color_reg <= sram_io;    
   end
