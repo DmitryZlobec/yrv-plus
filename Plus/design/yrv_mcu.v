@@ -81,7 +81,7 @@ module yrv_mcu  (debug_mode, port0_reg, port1_reg, port2_reg, port3_reg, ser_clk
 `endif
 
 `ifdef EXPOSE_MEM_BUS
-  output        mem_ready;                                 /* memory ready                 */
+  input        mem_ready;                                 /* memory ready                 */
   output [31:0] mem_rdata;                                 /* memory read data             */
   output        mem_lock;                                  /* memory lock (rmw)            */
   output        mem_write;                                 /* memory write enable          */
@@ -103,7 +103,7 @@ module yrv_mcu  (debug_mode, port0_reg, port1_reg, port2_reg, port3_reg, ser_clk
   wire          bus_32;                                    /* 32-bit bus select            */
   wire          debug_mode;                                /* in debug mode                */
   wire          ld_wdata;                                  /* serial port write            */
-  wire          mem_ready;                                 /* memory ready                 */
+  // wire          mem_ready;                                 /* memory ready                 */
   wire          mem_write;                                 /* memory write enable          */
   wire          port10_dec, port32_dec;                    /* i/o port decodes             */
   wire          port54_dec, port76_dec;
@@ -154,7 +154,7 @@ module yrv_mcu  (debug_mode, port0_reg, port1_reg, port2_reg, port3_reg, ser_clk
   /* 32-bit bus, no wait states, internal local interrupts                                 */
   /*****************************************************************************************/
   assign bus_32    = 1'b1;
-  assign mem_ready = 1'b1;
+  // assign mem_ready = 1'b1;
   assign li_req    = {12'h0, bufr_empty, bufr_done, bufr_full, bufr_ovr};
 
   /*****************************************************************************************/
