@@ -39,6 +39,7 @@ module top
 
   assign buzzer = 1'b1;
 
+  reg [7:0] vga_mem[0:1024*12];
 
   //--------------------------------------------------------------------------
   // Slow clock button / switch
@@ -58,6 +59,8 @@ module top
 
   wire muxed_clk_raw
     = slow_clk_mode ? clk_cnt [22] : clk_cnt[1];
+
+
 
 
   wire muxed_clk;
