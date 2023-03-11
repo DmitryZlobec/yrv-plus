@@ -135,15 +135,7 @@ module yrv_mcu  (debug_mode, port0_reg, port1_reg, port2_reg, port3_reg, ser_clk
   wire   [31:0] mem_rdata;                                 /* raw read data                */
 `else
   wire    [3:0] mem_wr_byte;                               /* system ram byte enables      */
-    `ifdef MEM_SIZE
-	reg     [7:0] mcu_mem [0:`MEM_SIZE];                          /* system ram                   */
-    `else
-//	reg     [7:0] mcu_mem [0:1024*16];                          /* system ram                   */
-	reg     [7:0] mcu_mem0 [0:1024*16];                          /* system ram                   */
-	reg     [7:0] mcu_mem1 [0:1024*16];                          /* system ram                   */
-	reg     [7:0] mcu_mem2 [0:1024*16];                          /* system ram                   */
-	reg     [7:0] mcu_mem3 [0:1024*16];                          /* system ram                   */
-    `endif
+	reg     [7:0] mcu_mem [0:1024*16];                          /* system ram                   */
   reg    [31:0] mem_rdata;                                 /* raw read data                */
 `endif
 
@@ -278,7 +270,7 @@ module yrv_mcu  (debug_mode, port0_reg, port1_reg, port2_reg, port3_reg, ser_clk
 `else
   assign mem_wr_byte = {4{mem_wr_reg}} & mem_ble_reg & {4{mem_ready}};
 
-/*
+
   always @ (posedge clk) begin
     if (mem_trans[0]) begin
       mem_rdata[31:24] <= mcu_mem[{mem_addr[13:2], 2'b11}];
@@ -291,19 +283,7 @@ module yrv_mcu  (debug_mode, port0_reg, port1_reg, port2_reg, port3_reg, ser_clk
     if (mem_wr_byte[1]) mcu_mem[{mem_addr_reg[13:2], 2'b01}] <= mem_wdata[15:8];
     if (mem_wr_byte[0]) mcu_mem[{mem_addr_reg[13:2], 2'b00}] <= mem_wdata[7:0];
     end
-*/
-  always @ (posedge clk) begin
-    if (mem_trans[0]) begin
-      mem_rdata[31:24] <= mcu_mem3[mem_addr[15:2]];
-      mem_rdata[23:16] <= mcu_mem2[mem_addr[15:2]];
-      mem_rdata[15:8]  <= mcu_mem1[mem_addr[15:2]];
-      mem_rdata[7:0]   <= mcu_mem0[mem_addr[15:2]];
-      end
-    if (mem_wr_byte[3]) mcu_mem3[mem_addr_reg[15:2]] <= mem_wdata[31:24];
-    if (mem_wr_byte[2]) mcu_mem2[mem_addr_reg[15:2]] <= mem_wdata[23:16];
-    if (mem_wr_byte[1]) mcu_mem1[mem_addr_reg[15:2]] <= mem_wdata[15:8];
-    if (mem_wr_byte[0]) mcu_mem0[mem_addr_reg[15:2]] <= mem_wdata[7:0];
-    end
+
 
 
 
