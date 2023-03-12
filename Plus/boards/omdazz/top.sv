@@ -123,6 +123,11 @@ module top
   wire    [3:0] vga_wr_byte_1;                                 /* vga ram byte enables      */
   reg           vga_wr_reg_1;                                  /* mem write                    */
 
+  reg     [7:0] char[0:2047];
+  initial $readmemh("char.mem8", char);
+
+  reg     [7:0] text_mem[0:4799];
+  initial $readmemh("text.mem8", text_mem);
 
   assign vga_wr_byte_0 = {4{vga_wr_reg_0}} & mem_ble_reg & {4{mem_ready}};
   assign vga_wr_byte_1 = {4{vga_wr_reg_1}} & mem_ble_reg & {4{mem_ready}};
@@ -299,38 +304,89 @@ module top
 
   logic [16:0] pixel_addr;
   wire  [16:0] wr_addr;
-  reg   [7:0]  color_reg;// = 8'b00000011;
+  reg   [2:0]  color_reg;// = 8'b00000011;
+  reg   [2:0]  border_color_reg = 3'b101;
 
+  reg  [1:0] pixel_color;
+  reg  [2:0] pixel_pos;
+  reg  [2:0] row_pos;
+  
+  reg [7:0] character;
 
-  // ((y>>1)<<8) + ((y>>1)<<6) + x>>1
-  // assign pixel_addr = (((y>>1)*320)+(x>>1));
+  reg [11:0] pixel_byte;
 
-  always @ (posedge clk) 
-  begin
-    if(x== 799 && y==524)
-      pixel_addr<=0;
+  wire [7:0] is_byte;
+
+  reg [7:0] row = 8'b01010111;
+
+  reg [12:0] text_symbol;
+
+  wire [6:0] d_row;
+
+  assign d_row = (y>>3);
+
+  always_ff @ (posedge vga_clock or negedge resetb)
+    if (~ resetb)
+      begin
+        text_symbol<=0;      
+      end
     else
-      pixel_addr <= (((y>>1)<<8) + ((y>>1)<<6) + ((x)>>1));
-  end
+      begin
+        if(x==799 && y == 524)
+          text_symbol<=0;
+        begin
+          if(pixel_pos == 3'b110)
+            text_symbol<= (d_row<<5)+(d_row<<4)+(d_row<<3)+(d_row<<2)+(x>>3);
+        end        
+      end
 
 
+  always_ff @ (posedge vga_clock or negedge resetb)
+    if (~ resetb)
+      begin
+        character<=0;      
+      end
+    else
+      begin
+        character<= text_mem[text_symbol];
+      end
 
-  assign sram_cs2 = 1'b1;
-  assign sram_n_cs1 = 1'b0;
-  assign sram_n_oe = 1'b0;
-  assign sram_n_we = ~ we_en;
 
-  wire [7:0] Rx_Data;
-  wire  [7:0] Tx_Data;
+  reg vga_clock;
+  wire symbol_clock;
+
+  always_ff @ (posedge clk or negedge resetb)
+    if (~ resetb)
+    begin
+      vga_clock<=0;
+    end
+    else
+      begin
+        vga_clock <=vga_clock+1;
+      end
+   
+  always_ff @ (posedge vga_clock or negedge hsync)
+    if (~ hsync)
+      begin
+        pixel_pos <=0;
+      end
+    else
+      begin
+        pixel_pos <=pixel_pos+1;     
+      end
+
+  always_ff @ (posedge hsync or negedge resetb)
+    if (~ resetb)
+      begin
+        row_pos <= 0;
+      end
+    else
+      if(y == 524)
+        row_pos <= 0;
+      else
+        row_pos <= row_pos+1;     
 
 
-  assign we_en = (vga_wr_reg_0 || vga_wr_reg_1) && mem_ready;
-
-  assign sram_a  = we_en ? wr_addr : pixel_addr;
-  
-  assign sram_io = we_en ? Tx_Data: 16'bZ;
-
-  
   always @ (posedge muxed_clk or negedge resetb) begin
     if (!resetb) begin
       mem_addr_reg <= 16'h0;
@@ -347,38 +403,10 @@ module top
   end
 
 
-  always_comb begin
-         if (vga_wr_byte_1[3]) Tx_Data <= mem_wdata[31:24];
-    else if (vga_wr_byte_1[2]) Tx_Data <= mem_wdata[23:16];
-    else if (vga_wr_byte_1[1]) Tx_Data <= mem_wdata[15:8];
-    else if (vga_wr_byte_1[0]) Tx_Data <= mem_wdata[7:0];  
-    else if (vga_wr_byte_0[3]) Tx_Data <= mem_wdata[31:24];
-    else if (vga_wr_byte_0[2]) Tx_Data <= mem_wdata[23:16];
-    else if (vga_wr_byte_0[1]) Tx_Data <= mem_wdata[15:8];
-    else                       Tx_Data <= mem_wdata[7:0];  // (vga_wr_byte_0[0]) 
-  end
-
-  always_comb begin
-         if (vga_wr_byte_0[3]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b1,1'b1};
-    else if (vga_wr_byte_0[2]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b1,1'b0};
-    else if (vga_wr_byte_0[1]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b0,1'b1};
-    else if (vga_wr_byte_0[0]) wr_addr = {1'b0,mem_addr_reg[15:2],1'b0,1'b0};
-    else if (vga_wr_byte_1[3]) wr_addr = {1'b1,mem_addr_reg[15:2],1'b1,1'b1};
-    else if (vga_wr_byte_1[2]) wr_addr = {1'b1,mem_addr_reg[15:2],1'b1,1'b0};
-    else if (vga_wr_byte_1[1]) wr_addr = {1'b1,mem_addr_reg[15:2],1'b0,1'b1};
-    else                       wr_addr = {1'b1,mem_addr_reg[15:2],1'b0,1'b0}; //(vga_wr_byte_1[0])
-  end
+  wire  [10:0] row_in_ram;
 
 
-
-
-  always @ (posedge clk) begin
-    if((! (vga_wr_reg_0 || vga_wr_reg_1))) begin
-          color_reg <= sram_io; 
-    end  
-  end
-
-
+  assign row_in_ram = (character<<3)+row_pos;
   always_comb
     begin
       if (~ display_on)
@@ -387,13 +415,11 @@ module top
         end
       else 
         begin
-          // rgb[2] = {color_reg[7] ||color_reg[6] || color_reg[5]};
-          // rgb[0] = {color_reg[4] ||color_reg[3] || color_reg[2]};
-          // rgb[1] = {color_reg[1] ||color_reg[0]};       
-
-          rgb[2] = {color_reg[2]};
-          rgb[1] = {color_reg[1]};
-          rgb[0] = {color_reg[0]};   
+          // if(char[row_pos][pixel_pos])
+          if(char[row_in_ram][pixel_pos])
+              rgb = 3'b111;
+          else
+              rgb = 3'b000;
         end
     end
 
