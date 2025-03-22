@@ -31,8 +31,6 @@ ltsf2.o:ltsf2.S
 	$(GCC) $(CFLAGS) -o $@ $^
 ltdf2.o:ltdf2.S
 	$(GCC) $(CFLAGS) -o $@ $^
-adddf3.o:adddf3.S
-	$(GCC) $(CFLAGS) -o $@ $^
 divdf3.o:divdf3.S
 	$(GCC) $(CFLAGS) -o $@ $^
 truncdfsf2.o:truncdfsf2.S
@@ -47,9 +45,15 @@ divsf3.o:divsf3.S
 	$(GCC) $(CFLAGS) -o $@ $^
 floatsidf.o:floatsidf.S
 	$(GCC) $(CFLAGS) -o $@ $^
+gtsf2.o:gtsf2.S
+	$(GCC) $(CFLAGS) -o $@ $^
+lesf2.o:lesf2.S
+	$(GCC) $(CFLAGS) -o $@ $^
+subsf3.o:subsf3.S
+	$(GCC) $(CFLAGS) -o $@ $^
 
 
-libfloat.a:muldi3.o floatsisf.o addsf3.o extendsfdf2.o fixsfsi.o ltsf2.o adddf3.o fp-mul32.o fp-precision.o divdf3.o truncdfsf2.o fabs.o gesf2.o eqsf2.o divsf3.o eqdf2.o ltdf2.o floatsidf.o
+libfloat.a:muldi3.o floatsisf.o extendsfdf2.o fixsfsi.o ltsf2.o fp-mul32.o fp-precision.o divdf3.o truncdfsf2.o fabs.o gesf2.o eqsf2.o divsf3.o eqdf2.o ltdf2.o floatsidf.o addsf3.o gtsf2.o lesf2.o subsf3.o
 	$(AR) $(ARFLAGS)  -o $@ $^
 
 clean:

@@ -1,6 +1,6 @@
-LD=gcc 
-GCC=gcc
-OBJ = objcopy
+LD=/c/riscv/bin/riscv-none-elf-gcc 
+GCC=/c/riscv/bin/riscv-none-elf-gcc
+OBJ = /c/riscv/bin/riscv-none-elf-objcopy
 B2H = ../common/bin2hex
 export objcopy := $(OBJ)
 export bin2hex := $(B2H)
@@ -28,8 +28,10 @@ _udivsi3.o:_udivsi3.c
 
 _umodsi3.o:_umodsi3.c
 	$(GCC) $(CFLAGS) -o $@ $^
+_clzdi2.o:_clzdi2.c
+	$(GCC) $(CFLAGS) -o $@ $^
 
-libmath.a:_divsi3.o _modsi3.o _mulsi3.o _udivmodsi4.o _udivsi3.o _umodsi3.o
+libmath.a:_divsi3.o _modsi3.o _mulsi3.o _udivmodsi4.o _udivsi3.o _umodsi3.o _clzdi2.o
 	$(AR) $(ARFLAGS)  -o $@ $^
 
 

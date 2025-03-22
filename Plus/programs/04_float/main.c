@@ -88,8 +88,9 @@ void main()
     for (int t = 0; t <= 360; t = t + 20)
     {
         char buf[32] = {0};
-
-        npf_snprintf(buf, sizeof(buf), " %d  %0.6f", t, sin(t));
+        float r = t/3;
+        float k = sin(t)*10;
+        npf_snprintf(buf, sizeof(buf), " %d  %0.6f %0.6f ", t, sin(t),k+r);
         ee_printf("%s\n", buf);
         very_long_sleep();
     }

@@ -20,8 +20,13 @@ div.o:div.S
 muldi3.o:muldi3.S
 	$(GCC) $(CCFLAGS) -o $@ $^
 
+_clzdi2.o:_clzdi2.c
+	$(GCC) $(CCFLAGS) -o $@ $^
 
-libmath.a:muldi3.o div.o
+_clzsi2.o:_clzsi2.c
+	$(GCC) $(CCFLAGS) -o $@ $^
+
+libmath.a:muldi3.o div.o _clzdi2.o _clzsi2.o
 	$(AR) $(ARFLAGS)  -o $@ $^
 
 clean:

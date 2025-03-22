@@ -34,7 +34,7 @@ main.o:main.c
 
 
 final.elf:crt0.o eset_led.o trap_ack.o nmi_vec.o dbg_vec.o main.o 
-	$(LD) $(LDFLAGS)  -o $@ $^  cordic/libcordic.a float/libfloat.a yrv/libyrv.a math/libmath.a 
+	$(LD) $(LDFLAGS)  -o $@ $^  cordic/libcordic.a yrv/libyrv.a gfloat/libfloat.a  math/libmath.a
 
 final:final.elf
 	$(OBJ) -O binary final.elf final

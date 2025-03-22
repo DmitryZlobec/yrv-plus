@@ -2,7 +2,7 @@ OUTPUT_ARCH( "riscv" )
 ENTRY(_start)
 MEMORY
 {
-  BRAM     (rx) : ORIGIN = 0x00000000, LENGTH = 32K
+  BRAM     (rx) : ORIGIN = 0x00000000, LENGTH = 128K
 }
 _TRAP_ACK = 0x040;
 _NMI_VECT = 0x100;

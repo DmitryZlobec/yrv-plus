@@ -25,6 +25,8 @@
 
 .global __addsf3
 
+#define PERFORMANCE
+
 #ifndef SPLIT_SUB
 
 .global __subsf3
